@@ -3,28 +3,32 @@ var app = express();
 var jwt = require('express-jwt');
 var bodyParser = require('body-parser'); //bodyparser + json + urlencoder
 var morgan  = require('morgan'); // logger
+var cors = require('cors'); 
+
 var tokenManager = require('./config/token_manager');
 var secret = require('./config/secret');
 
 app.listen(3001);
 app.use(bodyParser());
 app.use(morgan());
+app.use(express.static('../app'));
 
 //Routes
 var routes = {};
 routes.posts = require('./route/posts.js');
 routes.users = require('./route/users.js');
-routes.rss = require('./route/rss.js');
 
+// app.all('*', function(req, res, next) {
+//   res.set('Access-Control-Allow-Origin', 'http://localhost');
+//   res.set('Access-Control-Allow-Credentials', true);
+//   res.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT');
+//   res.set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
+//   if ('OPTIONS' == req.method) return res.send(200);
+//   next();
+// });
 
-app.all('*', function(req, res, next) {
-  res.set('Access-Control-Allow-Origin', 'http://localhost');
-  res.set('Access-Control-Allow-Credentials', true);
-  res.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT');
-  res.set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
-  if ('OPTIONS' == req.method) return res.send(200);
-  next();
-});
+// does the same as above: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-node-js
+app.use(cors());
 
 //Get all published post
 app.get('/post', routes.posts.list);
@@ -62,7 +66,9 @@ app.put('/post', jwt({secret: secret.secretToken}), tokenManager.verifyToken, ro
 //Delete the post id
 app.delete('/post/:id', jwt({secret: secret.secretToken}), tokenManager.verifyToken, routes.posts.delete); 
 
-//Serve the rss feed
-app.get('/rss', routes.rss.index);
+// app.get('/*', function(req, res){
+// 	console.log('we are going home!')
+//	res.sendFile('we no needy this me no thinks')
+// });
 
 console.log('Blog API is starting on port 3001');
